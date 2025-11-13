@@ -207,9 +207,11 @@ git checkout la rama donde lo tengas
 git push -u origin main
 ```
 ## Github subir mas ficheros (misma rama)
-
 ```
-git add directorio/s
+git pull --rebase origin main(conserva los comentarios)
+```
+```
+git add "archivo a subir"
 ```
 ```
 git commit -m "comentario"
@@ -218,13 +220,11 @@ git commit -m "comentario"
 git status
 ```
 ```
-git pull --rebase origin main(conserva los comentarios)
+git push origin main
 ```
+
 ```
 git fetch origin y git reset --hard origin/main(restea el repositorio)
-```
-```
-git push origin main
 ```
 ## Github descargar ficheros
 ```
