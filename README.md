@@ -1,5 +1,7 @@
 # Documentación: ODOO Y DOCKER EN UBUNTU
 
+---
+
 ## Requisitos Previos
 
 - Descargar **Ubuntu Live Server 24.04**
@@ -17,7 +19,7 @@
 | **Nombre** | ODOO |
 | **Protocolo** | TCP |
 | **IP Anfitrión** | 127.0.0.1 |
-| **Puerto Anfitrión** | 4444 (u otro) |
+| **Puerto Anfitrión** | 4444 (otro) |
 | **IP Invitado** | 10.0.2.15 |
 | **Puerto Invitado** | 8069 |
 
@@ -25,7 +27,7 @@
 
 ## 1. Instalación de Odoo y PostgreSQL
 
-### Instalación de Odoo al no contar con un docker-compose.yml
+### 1.1. Instalación de Odoo al no contar con un docker-compose.yml
 
 ```bash
 sudo apt install postgresql -y
@@ -39,11 +41,7 @@ sudo apt-get update && sudo apt-get install odoo
 sudo systemctl status odoo
 ```
 
----
-
-## 2. Instalación de Docker
-
-### Detener servicios de Odoo
+### 1.2. Detener servicios de Odoo
 
 ```bash
 sudo systemctl stop odoo
@@ -51,13 +49,17 @@ sudo systemctl disable odoo
 sudo systemctl status odoo
 ```
 
-### Paso 1: Desinstalación preventiva de Docker
+### 1.3. Desinstalación preventiva de Docker
 
 ```bash
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 ```
 
-### Paso 2: Agregar clave GPG oficial de Docker
+---
+
+## 2. Instalación de Docker con compose .yml
+
+### 2.1. Agregar clave GPG oficial de Docker
 
 ```bash
 sudo apt-get update
@@ -67,7 +69,7 @@ sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyring
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 ```
 
-### Paso 3: Agregar repositorio de Docker
+### 2.2. Agregar repositorio de Docker
 
 ```bash
 echo \
@@ -78,23 +80,26 @@ echo \
 sudo apt-get update
 ```
 
-### Paso 4: Instalación de paquetes de Docker
+### 2.3. Instalación de paquetes de Docker
 
 ```bash
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-### Paso 5: Crear contenedor de prueba
+### 2.4. Crear contenedor de prueba
 
 ```bash
+# Creamos el contenedor
 sudo docker run hello-world
+# Verificamos el contenedor creado
+docker ps -a
 ```
 
 ---
 
 ## 3. Creación de Contenedores Odoo
 
-### Contenedor de PostgreSQL (Base de Datos)
+### 3.1. Contenedor de PostgreSQL (Base de Datos)
 
 ```bash
 docker run -d \
@@ -106,7 +111,7 @@ docker run -d \
   postgres:15
 ```
 
-### Contenedor de Odoo (Desarrollo)
+### 3.2. Contenedor de Odoo (Desarrollo)
 
 ```bash
 docker run -d \
@@ -121,7 +126,7 @@ docker run -d \
   --dev=all
 ```
 
-### Asignar permisos
+### 3.3. Asignar permisos
 
 ```bash
 sudo usermod -aG docker $USER    # permisos de docker a usuario y reiniciamos
@@ -132,7 +137,9 @@ sudo chmod -R 777 /home/usuario/OdooDesarrollo/volumesOdoo/addons # permisos de 
 
 ## 4. Fichero Docker-Compose
 
-### docker-compose.yml
+### 4.1. docker-compose.yml
+
+Creamos docker-compose.yml en directorio y copiamos dentro con: `nano docker-compose.yml`
 
 ```yaml
 version: '3.3'
@@ -169,34 +176,46 @@ services:
       - ./volumesOdoo/dataPostgreSQL:/var/lib/postgresql/data
 ```
 
-### Comandos útiles
+### 4.2. Comandos de gestión
 
 ```bash
-sudo usermod -aG docker $USER    # damos permisos de docker a usuario y reiniciamos 
-docker compose up -d    # Iniciar contenedores
-docker compose down     # Detener contenedores
+# Conectamos en el explorador con: 
+http://localhost:8069/odoo
+
+# Damos permisos de docker a usuario y reiniciamos 
+sudo usermod -aG docker $USER
+
+# Iniciar contenedores
+docker compose up -d 
+
+# Detener contenedores   
+docker compose down
 ```
 
 ---
 
 ## 5. Post-Instalación
 
-### Subir al repositorio Git
+### 5.1. Subir al repositorio Git
 
-#### Crear archivo tar
+#### 5.1.1. Crear archivo tar
 
 ```bash
 sudo tar -cvzf nombre.tar volumesOdoo/
 ```
 
-#### Comprimir en formato xz
+#### 5.1.2. Comprimir en formato xz
 
 ```bash
+# Se comprime y queda en la misma ubicacion
 sudo tar -cvf volumesOdoo.tar.xz -I 'xz -9' volumesOdoo
 volumesOdoo/
+
+# Se mueve de ubicacion ejemplo:
+mv volumesOdoo.tar.xz ~/Escritorio/mi-repo-github/
 ```
 
-#### Configurar Git
+#### 5.1.3. Configurar Git
 
 ```bash
 git config --global init.defaultBranch main
@@ -208,7 +227,7 @@ git branch --show-current
 git config --global --add safe.directory "directorio"
 ```
 
-#### *Añadir archivos y hacer commit
+#### 5.1.4. Añadir archivos y hacer commit
 
 ```bash
 git init (en el fichero de trabajo github)
@@ -223,7 +242,7 @@ git commit -m "Actualización Odoo"
 git push origin main
 ```
 
-#### Subir a otra rama
+#### 5.1.5. Subir a otra rama
 
 ```bash
 git add ruta
@@ -234,7 +253,7 @@ git checkout "rama destino"
 git push -u origin rama_destino
 ```
 
-### Descargar ficheros del repositorio
+### 5.2. Descargar ficheros del repositorio
 
 ```bash
 git clone "URL repositorio"
@@ -245,7 +264,7 @@ tar xvf micomprimido.tar
 
 ## 6. Configuración de Empresa en Odoo
 
-### Configuración de Email y Puertos
+### 6.1. Configuración de Email y Puertos
 
 | Concepto | Valor |
 |----------|-------|
@@ -262,7 +281,7 @@ tar xvf micomprimido.tar
 | **Webmail** | webmail.qboxmail.com |
 | **Gerente** | manuel@theinkgarage.com |
 
-### Credenciales de Acceso
+### 6.2. Credenciales de Acceso
 
 | Campo | Valor |
 |-------|-------|
@@ -272,25 +291,24 @@ tar xvf micomprimido.tar
 
 ---
 
-## 7. Configuración de Odoo
+## 7. Personalización de Odoo
 
-### 1. Dependencias y Módulos Requeridos
+### 7.1. Dependencias y Módulos Requeridos
 
-#### Módulos a instalar
+#### 7.1.1. Módulos a instalar
 
 - **Ventas** → Para facturación
 - **Compras** → Proveedores y pedidos
 - **Inventario** → Entradas, recepciones y stock
 - **Empleados** → Trabajadores y usuarios
+- **Sitio WEB** → Sitio WEB en Odoo
 
-#### Módulos específicos
+#### 7.1.2. Módulos específicos
 
 - **Sale Block No Stock** → Permite facturar sin stock
 - **Stock Disallow Negative** → Evita stock negativo
 
----
-
-### 2. Configuración Inicial de la Empresa
+### 7.2. Configuración Inicial de la Empresa
 
 **Nombre:** TecnoFix
 
@@ -298,13 +316,11 @@ tar xvf micomprimido.tar
 1. Ir a **Ajustes → Empresa → Nueva Empresa**
 2. Ingresar datos básicos: RFC/NIF, dirección, moneda, email, teléfono
 
----
-
-### 3. Configuración del Correo
+### 7.3. Configuración del Correo
 
 **Ruta:** Ajustes → Técnico → Correo → Servidores de correo
 
-#### Servidor de correos de entrada (IMAP)
+#### 7.3.1. Servidor de correos de entrada (IMAP)
 
 | Campo | Valor |
 |-------|-------|
@@ -312,562 +328,294 @@ tar xvf micomprimido.tar
 | **Servidor** | imap.qboxmail.com |
 | **Puerto** | 993 |
 | **SSL/TLS** | Sí |
-| **Usuario** | tecnofix@odooserra.work.gd |
+| **Inicio de sesión** | tecnofix@odooserra.work.gd |
 | **Contraseña** | PerenxisaTecnо2025 |
+| **Acciones a realizar** | Nuevo mensaje de correo |
 
-#### Servidor de correos de salida (SMTP)
+#### 7.3.2. Servidor de correos de salida (SMTP)
 
 | Campo | Valor |
 |-------|-------|
 | **Nombre** | smtp_qbox |
-| **Autentificación** | Nombre de usuario |
-| **Encriptación** | SSL/TLS |
-| **Servidor SMTP** | smtp.qboxmail.com |
-| **Puerto SMTP** | 465 |
+| **Servidor** | smtp.qboxmail.com |
+| **Puerto** | 465 |
+| **Seguridad de conexión** | SSL/TLS |
+| **Nombre de usuario** | tecnofix@odooserra.work.gd |
+| **Contraseña** | PerenxisaTecnо2025 |
 
----
+### 7.4. Usuarios y Empleados
 
-### 4. Inventario
+#### 7.4.1. Configuración de Usuarios
 
-#### Crear almacenes
+**Ruta:** Ajustes → Usuarios & Empresas → Usuarios
 
-**Ruta:** Inventario → Configuración → Ajustes
+Crear usuarios con los siguientes roles:
+- **Ventas** → Usuario
+- **Compras** → Administrador
+- **Inventario** → Administrador
+- **Sitio Web** → Administrador
 
-1. **Almacenes:** Nuevos → Tecnofix
-2. Registrar existencias iniciales
-3. **Operaciones → Ajustes → Inventario físico**
-
-#### Resumen de inventario
-
-**Ruta:** Inventario → Informes → Valoración de inventario
-
-#### Recepción y validación de pedidos
-
-**Ruta:** Inventario → Operaciones → Recepciones
-
-1. Seleccionar recepción pendiente
-2. Verificar cantidades
-3. Validar
-
----
-
-### 5. Productos y Servicios
-
-#### Crear productos
-
-**Ruta:** Productos → Crear nuevo
-
-**Definir tipo:**
-- **Servicio** → Para trabajos, asistencia, etc.
-- **Producto almacenable** → Para stock
-
-**Configurar:** Precios e impuestos
-
-#### Servicios diferentes a productos
-
-1. En **Tipo de producto** elegir: **Servicio**
-2. Quitar rutas de inventario
-
----
-
-### 6. Etiquetas para Informes
-
-**Ruta:** Configuración → Técnico → Etiquetas
-
-Crear etiquetas para clasificar productos, pedidos o informes
-
----
-
-### 7. Proveedores
-
-#### Crear proveedores
-
-**Ruta:** Compras → Proveedores → Crear
-
-**Completar información básica:**
-- Nombre
-- Teléfono
-- Email
-- Dirección
-
-#### Seleccionar tipo
-
-| Tipo | Descripción |
-|------|-------------|
-| **Persona Física** | Autónomo |
-| **Compañía** | Empresa |
-
----
-
-### 8. Compras
-
-#### Solicitudes de presupuestos
-
-**Ruta:** Compras → Solicitudes de presupuesto → Nuevo
-
-1. Seleccionar proveedor
-2. Agregar productos o servicios
-
-#### Crear nuevo presupuesto a un proveedor
-
-1. Añadir líneas de productos
-2. Confirmar como **Pedido de compra**
-
-**Nota:** Un presupuesto confirmado = Pedido de compra
-
----
-
-### 9. Entradas de Inventario
-
-**Ruta:** Inventario → Operaciones → Recepciones
-
-1. Seleccionar entrada vinculada al pedido
-2. Validar para mover a stock
-
----
-
-### 10. Validación de Pedidos
-
-#### Ventas
-
-**Ruta:** Ventas → Pedidos
-
-1. Confirmar pedido
-2. Generar factura
-3. Validar factura
-
-#### Compras
-
-**Ruta:** Compras → Pedidos
-
-1. Confirmar compra
-2. Registrar recepción
-3. Validar
-
----
-
-### 11. Empleados, Usuarios y Roles
-
-#### Crear empleados
+#### 7.4.2. Crear Empleados
 
 **Ruta:** Empleados → Crear
 
-Ingresar información contractual y personal
+1. Rellenar formulario
+2. Asignar usuario
+3. Vincular a empresa
 
-#### Crear usuarios
+### 7.5. Configuración de Productos
 
-**Ruta:** Ajustes → Usuarios y empresas
+#### 7.5.1. Tipos de Productos
 
-1. Crear usuario
-2. Asignarle al empleado correspondiente
-3. Definir permisos:
-   - Ventas
-   - Compras
-   - Inventario
-   - Contabilidad
-   - Acceso de administrador
+**Ruta:** Inventario → Configuración → Productos → Productos
 
----
+- **Almacenable** → Requiere stock físico
+- **Consumible** → Sin seguimiento de stock
+- **Servicio** → Sin inventario
 
-### 12. Cambiar prefijos de documentos
+#### 7.5.2. Crear Producto
 
-#### Secuencia para Presupuestos
+1. Nombre del producto
+2. Tipo de producto
+3. Precio de venta
+4. Coste
+5. Categoría
+6. Impuestos
+7. Imagen
 
-**Formato:** V-AÑO-NUMERO
+#### 7.5.3. Categorías de Productos
 
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | Secuencia de Presupuestos |
-| **Código** | sale.order.quotation |
-| **Prefijo** | V-%(y)s- |
+**Ruta:** Inventario → Configuración → Categorías de producto
 
-#### Secuencia para Pedidos de Venta
+Crear categorías según necesidad:
+- Electrónica
+- Componentes
+- Accesorios
 
-**Formato:** PED-AÑO-NUMERO
+### 7.6. Configuración de Proveedores
 
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | Secuencia Pedidos de Venta |
-| **Código** | sale.order |
-| **Prefijo** | PED-%(year)s- |
+#### 7.6.1. Crear Proveedor
 
-#### Secuencia para Albaranes
-
-**Formato:** A-AÑO-NUMERO
+**Ruta:** Compras → Pedidos → Proveedores → Crear
 
 | Campo | Valor |
 |-------|-------|
-| **Nombre** | Secuencia Albaranes |
-| **Código** | Secuencia entrada/salida My Company |
-| **Prefijo Entrada** | A/IN/%(y)s/ |
-| **Prefijo Salida** | A/OUT/%(y)s/ |
+| **Nombre** | Nombre del proveedor |
+| **¿Es una Empresa?** | Sí |
+| **Teléfono** | Número de contacto |
+| **Móvil** | Número móvil |
+| **Email** | Correo electrónico |
+| **Sitio web** | URL |
+| **RFC/NIF** | Identificación fiscal |
 
----
+#### 7.6.2. Lista de precios del Proveedor
 
-## 8. Envío de Correo al Confirmar Pedido
+**Ruta:** Compras → Configuración → Listas de Precios
 
-### 1. Activar modo desarrollador
+1. Crear lista de precios
+2. Asignar a proveedor
+3. Definir productos y precios
 
-**Ruta:** Ajustes → Activar modo desarrollador (con activos de prueba)
+### 7.7. Configuración de Clientes
 
-### 2. Crear plantilla de correo
+#### 7.7.1. Crear Cliente
 
-**Ruta:** Ajustes → Técnico → Correo Electrónico → Plantillas → Nuevo
-
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | [Custom] - Correo pedido de venta |
-| **Aplicado a Modelo** | Pedido de venta (sale.order) |
-| **Asunto** | Gracias por su pedido {{object.name}} |
-
-#### Contenido del correo
-
-Para agregar marcadores dinámicos: **Shift + 7** para desplegar estructura, luego **#** para Marcador de posición dinámico
-
-```
-Hola {{object.partner_id.name}},
-
-Gracias por su pedido {{object.name}}
-
-Recuerda que tienes un saldo pendiente de: {{object.amount_total}} €
-
-Saludos,
-Equipo de Ventas.
-```
-
-**Guardar** la plantilla
-
-### 3. Probar la plantilla manualmente
-
-1. Ir a **Ventas → Pedidos de venta**
-2. Abrir un pedido que tenga cliente y email
-3. **Enviar mensaje → Redactar correo electrónico**
-4. Usar plantilla: **Custom - Correo pedido de venta**
-5. Verificar que el asunto y el cuerpo se renderizan con los valores reales
-6. Enviar (opcional) para comprobar llegada al buzón
-
-### 4. Crear la acción de servidor
-
-**Ruta:** Ajustes → Técnico → Acciones → Acciones de servidor → Nuevo
+**Ruta:** Ventas → Pedidos → Clientes → Crear
 
 | Campo | Valor |
 |-------|-------|
-| **Nombre** | Enviar correo electrónico automáticamente en venta |
-| **Modelo** | Pedido de venta (sale.order) |
-| **Tipo de acción** | Enviar correo electrónico |
-| **Plantilla de correo** | Custom - Correo pedido de venta |
+| **Nombre** | Nombre del cliente |
+| **Email** | Correo electrónico |
+| **Teléfono** | Número de contacto |
+| **Dirección** | Dirección completa |
+| **RFC/NIF** | Identificación fiscal |
 
-**Guardar**
+### 7.8. Configuración de Impuestos
 
----
+**Ruta:** Contabilidad → Configuración → Impuestos
 
-## 9. Automatización de Correo para Presupuesto > 20000 €
+#### 7.8.1. Impuestos de Venta (IVA)
 
-### 1. Requisitos previos
+| Impuesto | Porcentaje | Aplicación |
+|----------|------------|------------|
+| IVA 21% | 21% | General |
+| IVA 10% | 10% | Reducido |
+| IVA 4% | 4% | Superreducido |
 
-- **Instalar módulo:** CRM
-- **Activar modo desarrollador:** Ajustes → Activar modo desarrollador
+#### 7.8.2. Impuestos de Compra
 
-### 2. Crear plantilla de correo
+| Impuesto | Porcentaje | Aplicación |
+|----------|------------|------------|
+| IVA Soportado 21% | 21% | General |
+| IVA Soportado 10% | 10% | Reducido |
 
-**Ruta:** Técnico → Correo → Plantillas → Nuevo
+### 7.9. Configuración de Almacenes
 
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | Plantilla - Oportunidad > 20000 € |
-| **Modelo Aplicado a** | Lead/Opportunity (crm.lead) |
-| **Asunto** | Gracias por su interés — Presupuesto {{ object.name }} |
+**Ruta:** Inventario → Configuración → Almacenes
 
-#### Contenido
-
-```
-Hola,
-
-Se ha registrado/actualizado una oportunidad con un valor superior a 20.000 €.
-
-Nombre: {{object.name}}
-Cliente: {{object.partner_id.name}}
-Importe: {{object.expected_revenue}} €
-
-Saludos,
-Sistema Odoo
-```
-
-**Guardar**
-
-### 3. Crear regla de automatización
-
-**Ruta:** Técnico → Automatización → Reglas de automatización → Nuevo
+#### 7.9.1. Crear Almacén
 
 | Campo | Valor |
 |-------|-------|
-| **Nombre** | Aviso Oportunidad >= 20000 |
-| **Modelo** | crm.lead (Lead/Oportunidad) |
-| **Activador** | La etapa está establecida como (Calificado) |
-| **Aplicar a** | Editar dominio |
+| **Nombre** | Almacén Principal |
+| **Nombre corto** | ALM1 |
+| **Empresa** | TecnoFix |
 
-#### Dominio
+#### 7.9.2. Ubicaciones de Almacén
 
-**Coincidir todas las siguientes reglas:**
-- Ingresos esperados > 20000
+- **Ubicación de Stock** → Productos disponibles
+- **Ubicación de Entrada** → Recepciones
+- **Ubicación de Salida** → Envíos
+- **Ubicación de Chatarra** → Productos desechados
 
-**Nueva regla:**
-```python
-[('amount_total', '>=', 20000)]
-```
+### 7.10. Configuración de Inventario
 
-**Guardar**
+#### 7.10.1. Ajuste de Inventario
 
-### 4. Validación práctica
+**Ruta:** Inventario → Operaciones → Ajustes de Inventario
 
-**Ruta:** Ventas → Presupuestos → Nuevo
+1. Crear ajuste
+2. Agregar productos
+3. Definir cantidad
+4. Aplicar
+
+#### 7.10.2. Reglas de Reabastecimiento
+
+**Ruta:** Inventario → Configuración → Reglas de Reabastecimiento
+
+| Campo | Valor |
+|-------|-------|
+| **Producto** | Seleccionar producto |
+| **Ubicación** | Almacén Principal |
+| **Cantidad mínima** | Stock mínimo |
+| **Cantidad máxima** | Stock máximo |
+| **Cantidad a ordenar** | Cantidad de pedido |
+
+### 7.11. Configuración de Ventas
+
+#### 7.11.1. Términos y Condiciones
+
+**Ruta:** Ventas → Configuración → Ajustes
+
+Agregar términos y condiciones de venta predeterminados
+
+#### 7.11.2. Equipos de Ventas
+
+**Ruta:** Ventas → Configuración → Equipos de Ventas
+
+1. Crear equipo
+2. Asignar líder
+3. Agregar miembros
+
+#### 7.11.3. Crear Presupuesto/Pedido
+
+**Ruta:** Ventas → Pedidos → Presupuestos → Crear
 
 1. Seleccionar cliente
-2. Añadir productos/servicios con monto Total >= 20000 €
-3. Guardar
+2. Agregar productos
+3. Definir cantidades
+4. Confirmar pedido
 
-**Resultado:** Al guardar se ejecuta la regla y envía el correo automáticamente
+### 7.12. Configuración de Compras
 
-### 5. Depuración y comprobaciones
+#### 7.12.1. Crear Solicitud de Presupuesto
 
-| Elemento | Ruta |
-|----------|------|
-| **Logs de correo** | Técnico → Correo → Correos |
-| **Ejecuciones de automatización** | Historial en la regla de automatización |
-| **Permisos** | Revisar usuario o marcar "Ejecutar como sistema" |
-| **Plantilla** | Confirmar que `object.partner_id.email` tiene valor válido |
+**Ruta:** Compras → Pedidos → Solicitudes de Presupuesto → Crear
 
----
+1. Seleccionar proveedor
+2. Agregar productos
+3. Definir cantidades
+4. Confirmar pedido
 
-## 10. Automatización de Servicio al Realizar Pedido de Venta
+#### 7.12.2. Recepciones
 
-### 1. Creación del Producto A – Servidor HP Enterprise 2000
+**Ruta:** Inventario → Operaciones → Recepciones
 
-**Ruta:** Inventario → Productos → Productos → Crear
+1. Validar productos recibidos
+2. Verificar cantidades
+3. Confirmar recepción
 
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | Servidor HP Enterprise 2000 |
-| **Tipo de Producto** | Producto físico |
-| **Precio de Venta** | 1000 € |
-| **Categoría** | Hardware |
-| **Control de stock** | Sí (almacenable) |
+### 7.13. Configuración del Sitio Web
 
-**Guardar**
+#### 7.13.1. Activar Sitio Web
 
-### 2. Creación del Producto B – Servicio de Instalación
+**Ruta:** Sitio web → Configuración → Ajustes
 
-**Ruta:** Inventario → Productos → Productos → Crear
+- Activar modo de edición
+- Configurar dominio
+- Personalizar tema
 
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | Servicio de Instalación y Configuración de Servidores |
-| **Tipo de Producto** | Servicio |
-| **Precio de Venta** | 300 € |
+#### 7.13.2. Crear Páginas
 
-**Guardar**
+**Ruta:** Sitio web → Sitio → Páginas → Nueva Página
 
-### 3. Configurar la Acción Automática
+1. Seleccionar plantilla
+2. Editar contenido
+3. Publicar
 
-#### 3.1. Activar modo desarrollador
+#### 7.13.3. Configurar Tienda Online
 
-**Ruta:** Ajustes → Activar modo desarrollador
+**Ruta:** Sitio web → Tienda → Productos
 
-#### 3.2. Crear la Acción Automática
+1. Activar productos en sitio web
+2. Configurar categorías
+3. Definir precios
+4. Agregar imágenes
 
-**Ruta:** Ajustes → Técnico → Automatización → Acciones Automáticas → Crear
+#### 7.13.4. Métodos de Pago
 
-#### 3.3. Configurar datos principales
+**Ruta:** Sitio web → Configuración → Métodos de Pago
 
-| Campo | Valor |
-|-------|-------|
-| **Modelo** | Pedido de Venta (sale.order) |
-| **Nombre** | Crear pedido de venta de instalación cuando falte servicio |
-| **Activador** | El estado está establecido como → pedido de venta |
+Configurar proveedores:
+- Transferencia bancaria
+- PayPal
+- Stripe
+- Otros
 
-#### 3.4. Código Python
+### 7.14. Configuración de Envíos
 
-```python
-# 1. Obtener el producto de servicio (Producto B)
-# Se recomienda usar el ID, pero buscaremos por nombre para simplificar
-product_service = env['product.product'].search([
-    ('name', '=', 'Servicio de Instalación y Configuración de Servidores')
-], limit=1)
+#### 7.14.1. Métodos de Envío
 
-if product_service:
-    # 2. Crear el nuevo Pedido de Venta (Borrador)
-    # 'record' es la variable que representa el Pedido de Venta (sale.order) actual confirmado.
-    new_so = env['sale.order'].create({
-        'partner_id': record.partner_id.id,
-        'state': 'draft',  # Lo creamos como borrador
-    })
+**Ruta:** Sitio web → Configuración → Métodos de Envío → Crear
 
-    # 3. Crear la línea de pedido de servicio en el nuevo PV
-    env['sale.order.line'].create({
-        'order_id': new_so.id,
-        'product_id': product_service.id,
-        'name': product_service.display_name,
-        'product_uom_qty': 1.0,
-        'price_unit': product_service.list_price,
-    })
-```
-
-
----
-
-## 11. Configuración de Sitio Web y Métodos de Envío
-
-### 1. Activar el módulo de Sitio Web
-
-**Ruta:** Aplicaciones → Buscar "Sitio Web" → Instalar
-
-**Módulos necesarios:**
-- Sitio Web
-- Comercio Electrónico
-
----
-
-### 2. Configurar Métodos de Envío
-
-#### 2.1. Acceder a Métodos de Envío
-
-**Ruta:** Sitio Web → Configuración → Métodos de envío
-
-#### 2.2. Crear nuevo método de envío
-
-**Clic en:** Crear
-
-| Campo | Descripción |
-|-------|-------------|
-| **Nombre del método** | Ejemplo: Envío Estándar, Envío Express, etc. |
-| **Proveedor** | Proveedor de envío o método propio |
-| **Sitio web** | Seleccionar sitio web |
-| **Empresa** | Empresa (TecnoFix) |
-
----
-
-### 3. Agregar Peso a los Artículos
-
-#### 3.1. Configurar peso en productos
-
-**Ruta:** Inventario → Productos → Productos → Seleccionar producto
-
-**En la pestaña "Inventario":**
+##### Envío estándar
 
 | Campo | Valor |
 |-------|-------|
-| **Peso** | Peso en kg (ej: 2.5) |
-| **Volumen** | Volumen en m³ (opcional) |
+| **Nombre del método de envío** | Envío Estándar |
+| **Proveedor** | Envío Fijo |
+| **Sitios web** | Sitio web principal |
+| **Precio fijo** | 5.00 € |
 
-#### 3.2. Ejemplo de configuración
-
-```
-Producto: Servidor HP Enterprise 2000
-├── Peso: 15.5 kg
-├── Volumen: 0.08 m³
-└── Unidad de medida: Unidades
-```
-
-**Guardar** cambios
-
----
-
-### 4. Configurar Etiquetas de Productos
-
-#### 4.1. Crear etiquetas para clasificación
-
-
-**Ruta:** Comercio Electrónico → Etiquetas de producto
-
-**Crear nuevas etiquetas:**
-
-Nuevo → Nombre → Color → Imagen → **Guardar** 
-
-#### 4.2. Asignar etiquetas a productos
-
-**Ruta:** Inventario → Productos → Productos → Seleccionar producto
-
-**En pestaña "Ventas":**
-1. Buscar campo **"Etiquetas"**
-2. Seleccionar o crear etiquetas apropiadas
-3. **Guardar**
-
----
-
-### 5. Configurar Etiquetas Excluidas en Métodos de Envío
-
-#### 5.1. Definir exclusiones por etiqueta
-
-**Ruta:** Sitio Web → Configuración → Métodos de envío → Seleccionar método
-
-**En el formulario del método de envío:**
-
-| Campo | Configuración |
-|-------|---------------|
-| **Etiquetas excluidas** | Seleccionar etiquetas que NO pueden usar este método |
-
----
-
-### 6. Crear Reglas de Envío
-
-#### 6.1. Configurar reglas por condiciones
-
-**Ruta:** Sitio Web → Configuración → Métodos de envío → Seleccionar método → Pestaña "Reglas de precio"
-
-**Clic en:** Agregar una línea
-
-#### 6.2. Tipos de reglas disponibles
-
-| Tipo de Regla | Descripción |
-|---------------|-------------|
-| **Por precio** | Basado en el importe del pedido |
-| **Por peso** | Basado en el peso total del pedido |
-| **Por cantidad** | Basado en el número de artículos |
-| **Por volumen** | Basado en el volumen total |
-
----
-
-### 7. Configurar Envío Gratis por Condiciones
-
-#### 7.1. Crear regla de envío gratis
-
-**Ruta:** Sitio Web → Configuración → Métodos de envío → Crear o editar método
-
-**Configuración del método:**
+##### Envío express
 
 | Campo | Valor |
 |-------|-------|
-| **Metodo de envio** | Envío Gratis |
-| **Tipo de precio** | Basado en reglas |
-| **Gratis si el pedido supera** | Marcar casilla |
+| **Nombre del método de envío** | Envío Express |
+| **Proveedor** | Envío Fijo |
+| **Sitios web** | Sitio web principal |
+| **Precio fijo** | 10.00 € |
 
-#### 7.2. Configurar reglas de precio
-
-**En pestaña "Reglas de precio":** Agregar línea
-
+##### Envío basado en reglas
 
 | Campo | Valor |
 |-------|-------|
-| **Condición basada en** | Precio |
-| **Mínimo** | 0.00 € |
-| **Máximo** | 100.00 € |
-| **Precio** | 5.00 € |
+| **Nombre del método de envío** | Envío por Peso/Precio |
+| **Proveedor** | Basado en Reglas |
+| **Sitios web** | Sitio web principal |
 
-| Campo | Valor |
-|-------|-------|
-| **Condición basada en** | Precio |
-| **Mínimo** | 100.01 € |
-| **Máximo** | 999999.00 € |
-| **Precio** | 0.00 € |
+#### 7.14.2. Reglas de Precio de Envío
 
-##### Envío gratis por peso
+##### Regla 1: Productos ligeros
 
 | Campo | Valor |
 |-------|-------|
 | **Condición basada en** | Peso |
 | **Mínimo** | 0.00 kg |
 | **Máximo** | 5.00 kg |
-| **Precio** | 8.00 € |
+| **Precio** | 5.00 € |
+
+##### Regla 2: Productos pesados
 
 | Campo | Valor |
 |-------|-------|
@@ -890,32 +638,322 @@ Nuevo → Nombre → Color → Imagen → **Guardar**
 
 ---
 
+## 8. Creación de Módulo Odoo
 
+### 8.1. Preparación del Entorno
 
-### Comandos útiles adicionales
+```bash
+# Instalar Visual Studio Code
+
+# Instalar complementos de Python en Visual Studio Code
+
+# En el addons crear un directorio del nombre del módulo con dos ficheros:  
+# __init__.py y  __manifest__.py  
+
+# Editamos el manifest con nano:
+{ 'name': 'prueba' }
+```
+
+### 8.2. Creacion de modulo con Scaffold
+
+```bash
+# Acceder al contenedor Docker
+docker exec -it odoo-web bash
+
+# Crear el módulo con scaffold
+odoo scaffold prueba /mnt/extra-addons/
+
+# Salir del contenedor
+exit
+```
+
+### 8.3. Otorgar Permisos
+
+```bash
+sudo chown -R erick:erick /home/erick/tecnofix/volumesOdoo
+```
+
+### 8.4. Estructura Generada
+
+```
+prueba/
+├── __init__.py
+├── __manifest__.py
+├── controllers/
+│   ├── __init__.py
+│   └── controllers.py
+├── models/
+│   ├── __init__.py
+│   └── models.py
+├── views/
+│   └── views.xml
+├── security/
+│   └── ir.model.access.csv
+├── demo/
+│   └── demo.xml
+└── data/
+```
+
+---
+
+## 9. Modificación de Archivos del Módulo
+
+### 9.1. models.py
+
+#### 9.1.1. Definición del Modelo
+
+```python
+class Project(models.Model):
+    _name = 'project.advanced'              # Nombre técnico del modelo
+    _description = 'Proyecto Avanzado'      # Descripción legible
+    _inherit = ['mail.thread', 'mail.activity.mixin']  # Herencia de funcionalidades
+    _order = 'date_start desc, name'        # Orden por defecto
+```
+
+**Atributos especiales del modelo:**
+- `_name`: Identificador único del modelo
+- `_description`: Descripción para el usuario
+- `_inherit`: Herencia de otros modelos
+- `_order`: Orden por defecto en listados
+- `_rec_name`: Campo usado como nombre del registro (por defecto: 'name')
+- `_sql_constraints`: Restricciones a nivel de base de datos
+
+#### 9.1.2. Tipos de Campos
+
+##### Char (Cadena de texto)
+
+```python
+name = fields.Char(
+    string='Nombre del Proyecto',  # Etiqueta visible
+    required=True,                  # Campo obligatorio
+    tracking=True,                  # Rastrea cambios en el chatter
+    index=True,                     # Crea índice en BD
+    size=100,                       # Longitud máxima
+    translate=True,                 # Permite traducción
+    copy=False,                     # No se copia al duplicar
+    readonly=True,                  # Solo lectura
+    default='Nuevo'                 # Valor por defecto
+)
+```
+
+##### Integer (Entero)
+
+```python
+sequence = fields.Integer(
+    string='Secuencia',
+    default=10,
+    group_operator='sum'    # Operación de agrupación
+)
+```
+
+##### Float (Decimal)
+
+```python
+budget = fields.Float(
+    string='Presupuesto',
+    digits=(16, 2),         # (total_dígitos, decimales)
+    tracking=True
+)
+```
+
+##### Monetary (Monetario)
+
+```python
+amount = fields.Monetary(
+    string='Monto',
+    currency_field='currency_id'
+)
+currency_id = fields.Many2one('res.currency')
+```
+
+##### Selection (Selección)
+
+```python
+state = fields.Selection([
+    ('draft', 'Borrador'),
+    ('confirmed', 'Confirmado'),
+    ('in_progress', 'En Progreso'),
+    ('done', 'Terminado'),
+    ('cancelled', 'Cancelado')
+], string='Estado', default='draft', required=True, tracking=True)
+```
+
+#### 9.1.3. Campos Relacionales
+
+##### Many2one (Muchos a Uno)
+
+```python
+manager_id = fields.Many2one(
+    'res.users',                    # Modelo relacionado
+    string='Gerente del Proyecto',
+    default=lambda self: self.env.user,  # Usuario actual
+    required=True,
+    ondelete='restrict',            # 'cascade', 'set null', 'restrict'
+    domain=[('active', '=', True)], # Filtro de registros
+    context={'default_active': True},
+    tracking=True
+)
+```
+
+##### One2many (Uno a Muchos)
+
+```python
+task_ids = fields.One2many(
+    'project.task.advanced',    # Modelo hijo
+    'project_id',               # Campo que apunta al padre
+    string='Tareas',
+    copy=True                   # Se copian al duplicar
+)
+```
+
+##### Many2many (Muchos a Muchos)
+
+```python
+member_ids = fields.Many2many(
+    'res.users',                # Modelo relacionado
+    'project_user_rel',         # Tabla intermedia
+    'project_id',               # Campo ID en tabla intermedia
+    'user_id',                  # Campo del modelo relacionado
+    string='Miembros del Equipo'
+)
+```
+
+#### 9.1.4. Campos Computados con Dependencia
+
+##### @api.depends
+
+```python
+@api.depends('date_start', 'date_end')
+def _compute_duration(self):
+    for project in self:
+        if project.date_start and project.date_end:
+            delta = fields.Date.from_string(project.date_end) - \
+                    fields.Date.from_string(project.date_start)
+            project.duration_days = delta.days
+```
+
+### 9.2. views.xml
+
+#### 9.2.1. Estructura Básica
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Contenido de vistas, menús, acciones, etc. -->
+</odoo>
+```
+
+#### 9.2.2. Vista Lista
+
+```xml
+<record id="view_project_advanced_tree" model="ir.ui.view">
+    <field name="name">project.advanced.tree</field>
+    <field name="model">project.advanced</field>
+    <field name="arch" type="xml">
+        <list string="Proyectos" 
+              decoration-muted="state == 'cancelled'"
+              decoration-success="state == 'done'"
+              decoration-danger="state == 'draft'"
+              decoration-info="state == 'in_progress'"
+              sample="1"
+              multi_edit="1"
+              editable="bottom">
+            
+            <field name="name"/>
+            <field name="state" widget="badge"/>
+        </list>
+    </field>
+</record>
+```
+
+#### 9.2.3. Acción URL
+
+```xml
+<record id="action_project_help" model="ir.actions.act_url">
+    <field name="name">Documentación</field>
+    <field name="url">https://www.odoo.com/documentation</field>
+    <field name="target">new</field> <!-- new, self -->
+</record>
+```
+
+#### 9.2.4. Menús
+
+```xml
+<!-- Menú raíz -->
+<menuitem id="menu_project_advanced_root"
+          name="Proyectos Avanzados"
+          sequence="10"
+          web_icon="project_advanced,static/description/icon.png"/>
+
+<!-- Submenú con acción -->
+<menuitem id="menu_project_all"
+          name="Todos los Proyectos"
+          parent="menu_project_advanced_root"
+          action="action_project_advanced"
+          sequence="1"
+          groups="base.group_user"/>
+
+<!-- Menú de configuración -->
+<menuitem id="menu_project_config"
+          name="Configuración"
+          parent="menu_project_advanced_root"
+          sequence="99"
+          groups="base.group_system"/>
+```
+
+**Atributos de menuitem:**
+- `id`: Identificador único
+- `name`: Nombre visible
+- `parent`: Menú padre
+- `action`: Acción a ejecutar
+- `sequence`: Orden de aparición
+- `groups`: Grupos con acceso
+- `web_icon`: Icono del módulo
+
+### 9.3. ir.model.access.csv
+
+```csv
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_user,project.advanced.user,model_project_advanced,base.group_user,1,1,1,0
+access_project_manager,project.advanced.manager,model_project_advanced,project.group_manager,1,1,1,1
+```
+
+---
+
+## 10. Activación del Módulo
+
+Aplicaciones → buscar por nombre → Activar
+
+---
+## 11. Comandos Adicionales
 
 ```bash
 # Ver contenedores en ejecución
 docker ps
 
-# Ver logs de un contenedor
-docker logs odoo-web
-docker logs odoo-db
+# Iniciar contenedores (en segundo plano)
+docker compose up -d
 
-# Reiniciar contenedor
-docker restart odoo-web
+# Ver logs en tiempo real
+docker compose logs -f
 
-# Entrar a un contenedor
+# Ver logs de un servicio específico
+docker compose logs -f web
+docker compose logs -f db
+
+# Detener contenedores
+docker compose down
+
+# Reiniciar contenedores
+docker compose restart
+
+# Reiniciar un servicio específico
+docker compose restart web
+
+# Entrar al contenedor de Odoo
 docker exec -it odoo-web bash
+---
 
-# Limpiar contenedores detenidos
-docker container prune
-
-# Ver imágenes descargadas
-docker images
-```
-
-**Documento creado:** TecnoFix  
 **Última actualización:** 2026  
 **Versión de Odoo:** 18  
 **Versión de PostgreSQL:** 15
